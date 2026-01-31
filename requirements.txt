@@ -23,3 +23,7 @@ pandas
 gunicorn
 langchain-openai
 openai
+
+# for implementing vector DB
+pypdf
+weaviate-client[agents]

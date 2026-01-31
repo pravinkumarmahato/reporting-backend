@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from sql_guard import guarded_select
 from llm_logic import LlmOrchestrator
 from schema_context import get_schema_context
+from weaviate_search import search_pdf_chunks
 
 chat_bp = Blueprint("chat", __name__)
 CORS(chat_bp)
@@ -131,6 +132,21 @@ def stream_chat():
         yield "data: [DONE]\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
+
+
+# ---------- PDF / Document search (Weaviate) ----------
+@chat_bp.route("/search")
+def search_documents():
+    query = (request.args.get("query") or "").strip()
+    limit = request.args.get("limit", type=int) or 5
+    if not query:
+        return jsonify({"error": "Missing query parameter 'query'"}), 400
+    try:
+        results = search_pdf_chunks(query=query, limit=min(limit, 20))
+        return jsonify({"query": query, "results": results})
+    except Exception as e:
+        log.exception("Search failed")
+        return jsonify({"error": str(e)}), 500
 
 
 # ---------- Session list ----------
