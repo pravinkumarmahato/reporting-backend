@@ -2,12 +2,16 @@ import weaviate
 from weaviate.classes.query import MetadataQuery
 from weaviate_store_data import get_embedding
 
-WEAVIATE_HOST = "localhost"
-WEAVIATE_PORT = 8080
-WEAVIATE_GRPC_PORT = 50051
-COLLECTION_NAME = "PDFChunks"
-DEFAULT_LIMIT = 5
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+WEAVIATE_HOST = os.getenv("WEAVIATE_HOST", "localhost")
+WEAVIATE_PORT = int(os.getenv("WEAVIATE_PORT", "8080"))
+WEAVIATE_GRPC_PORT = int(os.getenv("WEAVIATE_GRPC_PORT", "50051"))
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "PDFChunks")
+DEFAULT_LIMIT = int(os.getenv("DEFAULT_LIMIT", "5"))
 
 def get_weaviate_client():
     """Return a connected Weaviate client."""

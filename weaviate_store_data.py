@@ -3,11 +3,25 @@ import requests
 from weaviate.classes.config import Configure, Property, DataType
 from pdf_operations import extract_full_pdf_text, chunk_text
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+WEAVIATE_HOST = os.getenv("WEAVIATE_HOST", "localhost")
+WEAVIATE_PORT = int(os.getenv("WEAVIATE_PORT", "8080"))
+WEAVIATE_GRPC_PORT = int(os.getenv("WEAVIATE_GRPC_PORT", "50051"))
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "PDFChunks")
+
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "localhost")
+OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+
 def get_embedding(text: str):
     response = requests.post(
-        "http://localhost:11434/api/embeddings",
+        f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/embeddings",
         json={
-            "model": "nomic-embed-text",
+            "model": OLLAMA_EMBEDDING_MODEL,
             "prompt": text
         }
     )
@@ -23,7 +37,7 @@ def store_pdf(pdf_path, client):
 
     chunks = chunk_text(full_text)
 
-    collection = client.collections.get("PDFChunks")
+    collection = client.collections.get(COLLECTION_NAME)
 
     for idx, chunk in enumerate(chunks):
         embedding = get_embedding(chunk)
@@ -41,15 +55,15 @@ def store_pdf(pdf_path, client):
 
 def main():
     client = weaviate.connect_to_local(
-        host="localhost",
-        port=8080,
-        grpc_port=50051
+        host = WEAVIATE_HOST,
+        port = WEAVIATE_PORT,
+        grpc_port = WEAVIATE_GRPC_PORT
     )
 
     try:
-        if not client.collections.exists("PDFChunks"):
+        if not client.collections.exists(COLLECTION_NAME):
             client.collections.create(
-                name="PDFChunks",
+                name=COLLECTION_NAME,
                 vector_config=Configure.VectorIndex.none(),
                 properties=[
                     Property(name="content", data_type=DataType.TEXT),
